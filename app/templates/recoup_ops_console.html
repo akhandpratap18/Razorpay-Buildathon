@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="referrer" content="no-referrer">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recoup — Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/recoup-ui.css?v=18">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="ops-theme">
+  <div class="layout-wrapper">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <svg class="brand-icon" viewBox="0 0 100 100"><use href="#cascadeShield"/></svg>
+        <div style="display:flex; flex-direction:column;">
+          <span class="brand-mark" style="font-size:16px;">RECOUP</span>
+          <span class="brand-sub" style="font-size:10px; margin-top:2px;">OPS CONSOLE</span>
+        </div>
+      </div>
+      <div class="sidebar-nav">
+        <button class="sidebar-btn active" id="tabDashboard" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="sidebar-btn" id="tabChat" onclick="switchTab('chat')">Chat</button>
+        <button class="sidebar-btn" id="tabEscalations" onclick="switchTab('escalations')" style="display:none;">Escalations</button>
+      </div>
+    </div>
+    <div class="main-content">
+
+  <!-- Reusable metallic "cascading shield" mark — Recoup's own signature, not Resend's -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e3a8a"/>
+        <stop offset="30%" stop-color="#2563eb"/>
+        <stop offset="50%" stop-color="#3b82f6"/>
+        <stop offset="70%" stop-color="#60a5fa"/>
+        <stop offset="100%" stop-color="#93c5fd"/>
+      </linearGradient>
+      <clipPath id="shieldClip">
+        <path d="M50,4 L90,18 V48 C90,74 72,90 50,98 C28,90 10,74 10,48 V18 Z"/>
+      </clipPath>
+      <symbol id="cascadeShield" viewBox="0 0 100 100">
+        <g clip-path="url(#shieldClip)">
+          <rect x="4"  y="8"  width="92" height="13" rx="3" fill="url(#metalGrad)" opacity="1"/>
+          <rect x="10" y="24" width="80" height="12" rx="3" fill="url(#metalGrad)" opacity="0.88"/>
+          <rect x="16" y="39" width="68" height="11" rx="3" fill="url(#metalGrad)" opacity="0.76"/>
+          <rect x="22" y="53" width="56" height="10" rx="3" fill="url(#metalGrad)" opacity="0.64"/>
+          <rect x="28" y="66" width="44" height="9"  rx="3" fill="url(#metalGrad)" opacity="0.52"/>
+          <rect x="34" y="78" width="32" height="8"  rx="3" fill="url(#metalGrad)" opacity="0.42"/>
+        </g>
+        <path d="M50,4 L90,18 V48 C90,74 72,90 50,98 C28,90 10,74 10,48 V18 Z"
+              fill="none" stroke="url(#metalGrad)" stroke-width="2.2" opacity="0.95"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="topbar">
+    <div class="brand"></div>
+    <div style="display:flex; align-items:center;">
+      <div class="status-pill">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">checking backend…</span>
+      </div>
+      <div class="gear" id="gearBtn" title="Connection settings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="chat-col">
+
+
+    <!-- ── Dashboard Panel ── -->
+    <div id="dashboardPanel" style="flex:1; overflow-y:auto; padding:24px;">
+      <div class="dash-stat-grid">
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('all')">
+          <span class="dash-stat-label">Total</span>
+          <span class="dash-stat-value" id="statTotal">—</span>
+        </div>
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('recovered')">
+          <span class="dash-stat-label">Recovered</span>
+          <span class="dash-stat-value dash-stat-ok" id="statRecovered">—</span>
+        </div>
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('failed')">
+          <span class="dash-stat-label">Failed</span>
+          <span class="dash-stat-value dash-stat-danger" id="statFailed">—</span>
+        </div>
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('escalated')">
+          <span class="dash-stat-label">Escalated</span>
+          <span class="dash-stat-value dash-stat-warn" id="statEscalated">—</span>
+        </div>
+
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('pending')">
+          <span class="dash-stat-label">Pending</span>
+          <span class="dash-stat-value" id="statPending">—</span>
+        </div>
+        <div class="dash-stat-card" style="cursor:pointer;" onclick="viewSegment('killed')">
+          <span class="dash-stat-label">Killed (Fraud)</span>
+          <span class="dash-stat-value" id="statKilled" style="color: #64748b;">—</span>
+        </div>
+
+      </div>
+
+      
+      <!-- Financial Overview -->
+      <div style="background:var(--panel-1); border:1px solid var(--line); border-radius:var(--radius); padding:24px; margin-bottom:32px; display:flex; gap:32px;">
+        <div style="flex:1;">
+          <div style="color:var(--text-2); font-size:13px; font-weight:600; margin-bottom:8px;">Amount Recovered</div>
+          <div style="font-size:24px; font-weight:800; color:var(--ok);" id="finRecovered">₹0</div>
+        </div>
+        <div style="flex:1;">
+          <div style="color:var(--text-2); font-size:13px; font-weight:600; margin-bottom:8px;">Amount Pending (Promises)</div>
+          <div style="font-size:24px; font-weight:800; color:var(--accent);" id="finPending">₹0</div>
+        </div>
+        <div style="flex:1;">
+          <div style="color:var(--text-2); font-size:13px; font-weight:600; margin-bottom:8px;">Amount At Risk</div>
+          <div style="font-size:24px; font-weight:800; color:var(--danger);" id="finRisk">₹0</div>
+        </div>
+      </div>
+
+      <div class="dash-section">
+        <h3 class="dash-section-title">Category Breakdown</h3>
+        <div id="categoryTable"><!-- rows injected by JS --></div>
+      </div>
+
+      <div class="dash-section">
+        <h3 class="dash-section-title">Recent Activity</h3>
+        <div id="activityTable"><!-- rows injected by JS --></div>
+      </div>
+    </div>
+
+    <!-- ── Escalations Panel (hidden by default) ── -->
+    <div id="escalationsPanel" style="display:none;flex:1;overflow-y:auto;padding:16px 24px;">
+      <div id="escalationsContainer" style="color:var(--text-2);">Loading…</div>
+    </div>
+
+    <!-- ── Support Tickets Panel (hidden by default) ── -->
+    <div id="supportTicketsPanel" style="display:none;flex:1;overflow-y:auto;padding:16px 24px;">
+      <div id="supportTicketsContainer" style="color:var(--text-2);">Loading…</div>
+    </div>
+
+    <div class="messages" id="messages">
+        <div class="empty" id="emptyState">
+          <div class="icon-tile"><svg viewBox="0 0 100 100"><use href="#cascadeShield"/></svg></div>
+          <h2>Recoup Ops Assistant</h2>
+          <p>Query live recovery status, inspect the audit trail, or trigger a bounded recovery action. Every write asks for confirmation first.</p>
+          <div class="chip-row">
+            <div class="chip" data-fill="Show me all escalated transactions">escalated transactions</div>
+            <div class="chip" data-fill="What's the current recovery rate?">recovery rate</div>
+            <div class="chip" data-fill="Show the audit trail for the last transaction">audit trail</div>
+            <div class="chip" data-fill="Is anything stuck in the job queue?">queue health</div>
+          </div>
+        </div>
+      </div>
+
+            <div id="interactiveAnchor" style="display: none; padding: 12px 16px; margin: 0 24px 12px 24px; background: var(--surface-1); border: 1px solid var(--surface-2); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); gap: 12px; align-items: center; z-index: 10;"></div>      <div class="inputbar">
+        <div class="inputwrap">
+          <button class="mic-toggle" id="voiceEnterBtn" title="Talk instead">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+            </svg>
+          </button>
+          <textarea id="input" rows="1" placeholder="Ask about a transaction, or tell it what to do…"></textarea>
+          <button class="send" id="sendBtn" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/>
+            </svg>
+          </button>
+        </div>
+        <div class="hint">Actions that move money or contact a customer always ask before executing</div>
+      </div>
+    </div>
+  </div>
+
+
+    </div>
+  </div>
+  <div class="overlay" id="overlay">
+    <div class="drawer">
+      <h3>Connection</h3>
+      <div class="field">
+        <label>API base URL</label>
+        <input id="apiUrl" placeholder="http://localhost:8000" />
+        <small>Where <code>POST /ops/chat</code> is served.</small>
+      </div>
+      <div class="field">
+        <label>Ops token</label>
+        <input id="apiToken" type="password" placeholder="X-Ops-Token value" />
+        <small>Sent as a header on every request. Kept in memory only — cleared on reload.</small>
+      </div>
+      <button class="save-btn" id="saveSettings">Save & reconnect</button>
+      
+
+    </div>
+  </div>
+
+  <!-- ── Voice mode: full-screen takeover ── -->
+  <div class="voice-overlay" id="voiceOverlay">
+    <div class="voice-topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 100 100"><use href="#cascadeShield"/></svg>
+        <span class="brand-mark">RECOUP</span>
+      </div>
+    </div>
+    <div class="voice-stage" id="voiceStage" data-state="idle">
+      <div class="orb-wrap">
+        <div class="orb-ring"></div>
+        <div class="orb">
+          <div class="blob-group">
+            <div class="blob blob-a"></div>
+            <div class="blob blob-b"></div>
+            <div class="blob blob-c"></div>
+            <div class="blob blob-d"></div>
+          </div>
+        </div>
+      </div>
+      <div class="voice-state-label" id="voiceStateLabel">Tap to talk</div>
+      <div class="voice-caption" id="voiceCaption"></div>
+    </div>
+    <div id="voiceInteractiveAnchor" style="display: none; padding: 12px 16px; margin: 0 auto 24px auto; width: 90%; max-width: 500px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 10;"></div>
+    <div class="voice-controls">
+      <button class="voice-mic-btn" id="voiceMicBtn" title="Tap to talk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+        </svg>
+      </button>
+      <button class="voice-exit-btn" id="voiceExitBtn" title="Back to text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+
+<script>
+  // In-memory only — never persisted to disk/localStorage.
+  const config = { apiUrl: "https://razorpay-buildathon.onrender.com", apiToken: "" };
+  let conversationId = crypto.randomUUID();
+  let chatHistory = [];
+  let pendingProposal = null;
+
+  const $ = (id) => document.getElementById(id);
+  const messagesEl = $("messages");
+  const emptyState = $("emptyState");
+  
+  function renderText(text) {
+    if (typeof marked !== "undefined") {
+      return marked.parse(text || "", { breaks: true, gfm: true });
+    }
+    let html = (text || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s\)<"']+)/g, function(match, mdText, mdUrl, rawUrl) {
+      if (rawUrl) {
+        let cleanUrl = rawUrl.replace(/[.,;!?]$/, '');
+        let trailing = rawUrl.substring(cleanUrl.length);
+        return '<a href="' + cleanUrl + '" target="_blank" style="text-decoration: underline; color: #3b82f6;">' + cleanUrl + '</a>' + trailing;
+      } else {
+        return '<a href="' + mdUrl + '" target="_blank" style="text-decoration: underline; color: #3b82f6;">' + mdText + '</a>';
+      }
+    });
+    return html;
+  }
+
+  const input = $("input");
+  const sendBtn = $("sendBtn");
+
+  function autoGrow(){
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 140) + "px";
+  }
+  input.addEventListener("input", autoGrow);
+
+  document.querySelectorAll(".chip").forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      input.value = chip.dataset.fill;
+      autoGrow();
+      input.focus();
+    });
+  });
+
+  $("gearBtn").addEventListener("click", ()=> {
+    $("apiUrl").value = config.apiUrl;
+    $("apiToken").value = config.apiToken;
+    $("overlay").classList.add("open");
+  });
+  $("overlay").addEventListener("click", (e)=>{ if(e.target.id==="overlay") $("overlay").classList.remove("open"); });
+  $("saveSettings").addEventListener("click", ()=>{
+    config.apiUrl = $("apiUrl").value.trim() || config.apiUrl;
+    config.apiToken = $("apiToken").value.trim();
+    $("overlay").classList.remove("open");
+    checkHealth();
+  switchTab('dashboard');
+  });
+
+  function addMessage(role, text, opts={}){
+    if(emptyState) emptyState.style.display = "none";
+    
+    if(!opts.noHistory) {
+      chatHistory.push({role: role === "op" ? "user" : "agent", content: text});
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + (role === "op" ? "op" : "agent");
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (opts.proposal ? " proposal" : "");
+
+    if(opts.toolName){
+      const chip = document.createElement("div");
+      chip.className = "tool-chip";
+      chip.textContent = opts.toolName;
+      bubble.appendChild(chip);
+    }
+
+    const textNode = document.createElement("div");
+    textNode.className = "msg-body";
+    textNode.innerHTML = renderText(text);
+    bubble.appendChild(textNode);
+
+    if(opts.proposal){
+      const row = document.createElement("div");
+      row.className = "confirm-row";
+      const confirmBtn = document.createElement("button");
+      confirmBtn.className = "btn-confirm";
+      confirmBtn.textContent = "Confirm";
+      confirmBtn.onclick = () => sendMessage("Confirm", true);
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "btn-cancel";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => sendMessage("Cancel that", true);
+      row.appendChild(confirmBtn);
+      row.appendChild(cancelBtn);
+      bubble.appendChild(row);
+    }
+
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return wrap;
+  }
+
+  function addTyping(){
+    const wrap = document.createElement("div");
+    wrap.className = "msg agent";
+    wrap.id = "typingRow";
+    wrap.innerHTML = `<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+  function removeTyping(){
+    const t = $("typingRow");
+    if(t) t.remove();
+  }
+
+  async function checkHealth(){
+    const dot = $("statusDot"), text = $("statusText");
+    try{
+      const res = await fetch(config.apiUrl.replace(/\/$/, "") + "/health", { method: "GET" });
+      if(res.ok){
+        dot.classList.remove("off");
+        text.textContent = "backend connected";
+      } else {
+        throw new Error("bad status");
+      }
+    } catch(e){
+      dot.classList.add("off");
+      text.textContent = "backend unreachable — check settings";
+    }
+  }
+
+  async function sendMessage(overrideText, isConfirmAction){
+    const text = (overrideText ?? input.value).trim();
+    if(!text) return;
+
+    addMessage("op", text);
+    if(!isConfirmAction){
+      input.value = "";
+      autoGrow();
+    }
+    // Dismiss any open interactive anchor when user sends a message
+    dismissAnchor();
+    sendBtn.disabled = true;
+    addTyping();
+
+    try{
+      const res = await fetch(config.apiUrl.replace(/\/$/, "") + "/ops/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Ops-Token": config.apiToken
+        },
+        body: JSON.stringify({ message: text, conversation_id: conversationId, history: chatHistory.slice(0, -1) })
+      });
+
+      removeTyping();
+
+      if(!res.ok){
+        addMessage("agent", `Couldn't reach Recoup's backend (HTTP ${res.status}). Check the API is running and the ops token is correct.`);
+        return;
+      }
+
+      const data = await res.json();
+      let replyText = data.reply || "(no reply returned)";
+      let opts = {
+        toolName: data.tool_used || null,
+        proposal: !!data.requires_confirmation
+      };
+      
+      if (data.input_request) {
+          showAnchor(data.input_request);
+      }
+      
+      if (voiceOverlay.classList.contains("active")) {
+          speakInVoiceMode(replyText);
+      }
+      
+      addMessage("agent", replyText, opts);
+    } catch(err){
+      removeTyping();
+      addMessage("agent", "Couldn't reach Recoup's backend — check the API is running and the base URL in settings is correct.");
+    } finally{
+      sendBtn.disabled = false;
+      if(!document.getElementById("interactiveAnchor").style.display || document.getElementById("interactiveAnchor").style.display === "none"){
+        input.focus();
+      }
+    }
+  }
+
+  // ── Interactive Anchor (above inputbar) ──────────────────────────────────
+  const anchorEl = document.getElementById("interactiveAnchor");
+  const anchorLabel = document.getElementById("interactiveAnchorLabel");
+  const anchorInput = document.getElementById("interactiveAnchorInput");
+  const anchorSubmit = document.getElementById("interactiveAnchorSubmit");
+
+  function dismissAnchor() {
+    anchorEl.style.display = "none";
+    anchorEl.innerHTML = "";
+    const voiceAnchor = document.getElementById("voiceInteractiveAnchor");
+    if (voiceAnchor) {
+        voiceAnchor.style.display = "none";
+        voiceAnchor.innerHTML = "";
+    }
+  }
+
+  function formatOption(opt) {
+      if (typeof opt !== 'string') return opt;
+      return opt.split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+  }
+
+  function showAnchor(ir) {
+    const inVoiceMode = voiceOverlay.classList.contains("active");
+    const targetAnchorEl = inVoiceMode 
+      ? document.getElementById("voiceInteractiveAnchor") 
+      : document.getElementById("interactiveAnchor");
+      
+    targetAnchorEl.innerHTML = "";
+    targetAnchorEl.style.display = "flex";
+    targetAnchorEl.style.flexDirection = "column";
+    targetAnchorEl.style.gap = "8px";
+    targetAnchorEl.style.padding = "12px 16px";
+
+    // Prompt label
+    const label = document.createElement("div");
+    label.style.fontSize = "13px";
+    label.style.fontWeight = "500";
+    label.style.color = "var(--text-2)";
+    label.textContent = ir.prompt || "Missing details:";
+    targetAnchorEl.appendChild(label);
+
+    const body = document.createElement("div");
+    body.style.display = "flex";
+    body.style.flexDirection = "column";
+    body.style.gap = "6px";
+    targetAnchorEl.appendChild(body);
+
+    if (ir.options && ir.options.length > 0) {
+      // IDE-style numbered buttons
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.flexWrap = "wrap";
+      btnRow.style.gap = "6px";
+
+      ir.options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "btn-ide-option";
+        btn.innerHTML = `<span class="shortcut-num">${idx + 1}</span> ${formatOption(opt)}`;
+        btn.onclick = () => {
+          dismissAnchor();
+          sendMessage(opt, true);
+        };
+        btnRow.appendChild(btn);
+      });
+
+      // Escape: type in main input
+      const escBtn = document.createElement("button");
+      escBtn.className = "btn-ide-option";
+      escBtn.innerHTML = `<span class="shortcut-num">${ir.options.length + 1}</span> Type manually`;
+      escBtn.onclick = () => { dismissAnchor(); input.focus(); };
+      btnRow.appendChild(escBtn);
+
+      body.appendChild(btnRow);
+    } else {
+      // Free-text inline input
+      const flexRow = document.createElement("div");
+      flexRow.style.display = "flex";
+      flexRow.style.gap = "8px";
+
+      const fi = document.createElement("input");
+      fi.type = "text";
+      fi.placeholder = "Type your response…";
+      fi.style.flex = "1";
+      fi.style.background = "var(--bg)";
+      fi.style.border = "1px solid var(--line)";
+      fi.style.color = "var(--text-1)";
+      fi.style.padding = "8px 12px";
+      fi.style.borderRadius = "6px";
+      fi.style.fontFamily = "var(--font-body)";
+      fi.style.fontSize = "13px";
+      fi.style.outline = "none";
+
+      const sb = document.createElement("button");
+      sb.textContent = "Submit";
+      sb.style.cssText = "padding:8px 16px;border-radius:6px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:13px;";
+
+      const doSubmit = () => {
+        const val = fi.value.trim();
+        if (val) { dismissAnchor(); sendMessage(val, true); }
+      };
+      sb.onclick = doSubmit;
+      fi.addEventListener("keydown", e => { if(e.key === "Enter") doSubmit(); });
+
+      flexRow.appendChild(fi);
+      flexRow.appendChild(sb);
+      body.appendChild(flexRow);
+      setTimeout(() => fi.focus(), 80);
+    }
+
+    // Scroll messages to bottom
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // Auto-dismiss anchor if user starts typing in main textarea
+  input.addEventListener("focus", () => {
+    if(targetAnchorEl.style.display && targetAnchorEl.style.display !== "none"){
+      dismissAnchor();
+    }
+  });
+
+
+  sendBtn.addEventListener("click", () => sendMessage());
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  checkHealth();
+  switchTab('dashboard');
+
+  // Voice Mode Logic
+  let voiceIsRecording = false;
+  let vMediaRecorder;
+  let vAudioChunks = [];
+  let vStream;
+  let vAudioContext, vAnalyser, vSource, vDrawFrame;
+  let currentAudio = null;
+  
+  let audioQueue = [];
+  let isPlayingQueue = false;
+
+  const voiceEnterBtn = document.getElementById("voiceEnterBtn");
+  const voiceOverlay = document.getElementById("voiceOverlay");
+  const voiceExitBtn = document.getElementById("voiceExitBtn");
+  const voiceMicBtn = document.getElementById("voiceMicBtn");
+  const voiceStage = document.getElementById("voiceStage");
+  const voiceStateLabel = document.getElementById("voiceStateLabel");
+  const voiceCaption = document.getElementById("voiceCaption");
+
+  function setVoiceState(state, label) {
+    voiceStage.dataset.state = state;
+    voiceStateLabel.textContent = label;
+  }
+  function setVoiceCaption(text){
+    voiceCaption.style.opacity = 0;
+    setTimeout(() => { voiceCaption.innerHTML = (typeof renderText !== "undefined") ? renderText(text) : (text || ""); voiceCaption.style.opacity = 1; }, 90);
+  }
+
+  function stopSpeaking() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  function exitVoiceMode(){
+    if(voiceIsRecording) stopVoiceListening();
+    stopSpeaking();
+    voiceOverlay.classList.remove("active");
+  }
+
+  voiceEnterBtn.onclick = () => {
+    voiceOverlay.classList.add("active");
+    setVoiceState("idle", "Tap to talk");
+    setVoiceCaption("");
+    
+  };
+  voiceExitBtn.onclick = exitVoiceMode;
+  
+  voiceMicBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if(voiceIsRecording) {
+      stopVoiceListening();
+    } else {
+      toggleVoiceRecording();
+    }
+  });
+
+
+  async function toggleVoiceRecording(){
+    if(voiceIsRecording) return;
+    voiceIsRecording = true; // eagerly set
+    stopSpeaking();
+    
+    try {
+      vStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch(err){
+      setVoiceState("idle", "Microphone access needed");
+      setVoiceCaption("Microphone access is needed to talk — try text instead.");
+      return;
+    }
+    vAudioChunks = [];
+    vMediaRecorder = new MediaRecorder(vStream);
+    vMediaRecorder.ondataavailable = (e) => vAudioChunks.push(e.data);
+    
+    vMediaRecorder.onstart = () => {
+      setVoiceState("listening", "Listening…");
+      setVoiceCaption("");
+      
+      vAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+      vAnalyser = vAudioContext.createAnalyser();
+      vSource = vAudioContext.createMediaStreamSource(vStream);
+      vSource.connect(vAnalyser);
+      vAnalyser.fftSize = 256;
+      const bufferLength = vAnalyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      function drawAmp(){
+        if(!voiceIsRecording) return;
+        vDrawFrame = requestAnimationFrame(drawAmp);
+        vAnalyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for(let i=0; i<bufferLength; i++) sum += dataArray[i];
+        let avg = sum / bufferLength;
+        let amp = Math.min(Math.max(avg / 128, 0), 1);
+        voiceStage.style.setProperty('--amp', amp);
+      }
+      drawAmp();
+    };
+
+    vMediaRecorder.onstop = async () => {
+      voiceIsRecording = false;
+      cancelAnimationFrame(vDrawFrame);
+      voiceStage.style.removeProperty('--amp');
+      if(vStream) vStream.getTracks().forEach(t => t.stop());
+      if(vAudioContext) vAudioContext.close();
+      
+      const audioBlob = new Blob(vAudioChunks, { type: 'audio/webm' });
+      
+      setVoiceState("thinking", "Thinking…");
+      setVoiceCaption("");
+      
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "audio.webm");
+      formData.append("prompt_context", "मैं Razorpay Recoup Ops Core हूँ। Transcribe ops commands accurately (e.g. escalated transactions, audit trail, recovery rate). Hindi speech must use Devanagari script.");
+      
+      try {
+        const trRes = await fetch(config.apiUrl.replace(/\/$/, "") + "/voice/transcribe", {
+          method: "POST",
+          body: formData
+        });
+        if(!trRes.ok) throw new Error("Transcription failed");
+        const trData = await trRes.json();
+        const transcript = trData.transcript || trData.text;
+        
+        setVoiceCaption(transcript);
+        
+        // Manually push transcript to history before fetch so it's correct
+        chatHistory.push({role: "user", content: transcript});
+        
+        // Call Ops Chat with transcribed text
+        const chatRes = await fetch(config.apiUrl.replace(/\/$/, "") + "/ops/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Ops-Token": config.apiToken
+          },
+          body: JSON.stringify({ message: transcript, history: chatHistory.slice(0, -1) })
+        });
+        
+        if(!chatRes.ok) throw new Error("Chat failed");
+        const chatData = await chatRes.json();
+        
+        let replyText = chatData.reply;
+        let opts = {};
+        if (chatData.input_request) {
+            showAnchor(chatData.input_request);
+        }
+        
+        speakInVoiceMode(replyText);
+        // Also add to text UI (use noHistory to avoid duplicates since we pushed it manually above)
+        addMessage("op", transcript, {noHistory: true});
+        addMessage("agent", replyText, opts);
+
+        
+      } catch(e){
+        setVoiceState("idle", "Tap to talk");
+        setVoiceCaption("Couldn't reach Recoup — please try again.");
+      }
+    };
+
+    vMediaRecorder.start();
+  }
+
+  function stopVoiceListening(){
+    if(!voiceIsRecording) return;
+    voiceIsRecording = false;
+    if(vMediaRecorder && vMediaRecorder.state !== "inactive") {
+      vMediaRecorder.stop();
+    }
+  }
+
+  function speakInVoiceMode(speechText) {
+    if (!speechText) {
+      setTimeout(() => { setVoiceState("idle", "Tap to talk"); }, 2000);
+      return;
+    }
+    
+    // Update UI immediately
+    setVoiceState("speaking", "Speaking...");
+    
+    // Strip markdown for the text display
+    let displayText = speechText.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, "$1")
+                                .replace(/[*_]/g, "");
+    setVoiceCaption(displayText);
+    
+    // Remove markdown tables entirely from the spoken audio (lines with at least 2 pipes)
+    speechText = speechText.replace(/^.*\|.*\|.*$/gm, "");
+    
+    // Replace bullet points with a period so the TTS engine adds a natural pause
+    speechText = speechText.replace(/\n[-*•]\s+/g, ". ");
+    speechText = speechText.replace(/^[-*•]\s+/g, ". ");
+    
+    // Format for speech
+    speechText = speechText.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{8}([a-f0-9]{4})/gi, "ending in $1");
+    speechText = speechText.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, "$1")
+                           .replace(/(https?:\/\/[^\s\)]+)/g, "the link")
+                           .replace(/[*#\[\]()|_]/g, " ");
+    
+    stopSpeaking();
+    
+    const isUrdu = /[\u0600-\u06FF]/.test(speechText);
+    const isDevanagari = /[\u0900-\u097F]/.test(speechText);
+    const isHindi = isUrdu || isDevanagari;
+    const targetLang = isUrdu ? "ur-PK" : "hi-IN";
+    
+    // Helper function for Native Browser TTS Fallback
+    function playNativeTTS() {
+        if ("speechSynthesis" in window) {
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            const voices = window.speechSynthesis.getVoices();
+            let preferred = null;
+            
+            if (isHindi) {
+                // Prefer Female Hindi/Urdu voice
+                preferred = voices.find(v => (v.lang.startsWith("hi") || v.lang.startsWith("ur")) && !v.name.includes("Male") && !v.name.includes("Rishi") && !v.name.includes("Hemant")) || voices.find(v => v.lang.startsWith("hi") || v.lang.startsWith("ur"));
+                utterance.lang = targetLang;
+                utterance.rate = 0.85; // Slow down Hindi for better clarity
+            } else {
+                // Prefer Male English voice
+                preferred = voices.find(v => v.name.includes("Daniel") || v.name.includes("Arthur") || v.name.includes("David") || (v.lang.startsWith("en") && v.name.includes("Male"))) || voices.find(v => v.lang === "en-GB") || voices[0];
+                utterance.lang = "en-GB";
+                utterance.rate = 1.05;
+            }
+            
+            if (preferred) utterance.voice = preferred;
+            utterance.pitch = 0.95;
+            
+            utterance.onend = () => { setVoiceState("idle", "Tap to talk"); };
+            utterance.onerror = (e) => { setVoiceState("idle", "Tap to talk"); };
+            
+            // Delay speech slightly to allow UI to render the caption
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        } else {
+            setTimeout(() => { setVoiceState("idle", "Tap to talk"); }, 2000);
+        }
+    }
+    
+    // First try our Backend Proxy (which uses Kokoro via ENV, or edge_tts)
+    const lang = isUrdu ? "ur" : (isDevanagari ? "hi" : "en");
+    const audioUrl = config.apiUrl.replace(/\/$/, "") + `/voice/speak?text=${encodeURIComponent(speechText)}&lang=${lang}`;
+    
+    currentAudio = new Audio(audioUrl);
+    
+    let fallbackTriggered = false;
+    function triggerFallback() {
+        if (fallbackTriggered) return;
+        fallbackTriggered = true;
+        playNativeTTS();
+    }
+    
+    currentAudio.onended = () => { setVoiceState("idle", "Tap to talk"); };
+    currentAudio.onerror = (e) => { 
+        console.warn("Backend TTS failed. Falling back to native browser TTS.");
+        currentAudio = null;
+        triggerFallback();
+    };
+    currentAudio.play().catch(e => {
+        console.warn("Backend TTS play failed. Falling back to native browser TTS.");
+        currentAudio = null;
+        triggerFallback();
+    });
+  }
+
+  // ── Dashboard Panel ──────────────────────────────────────────────────────
+  
+  let currentSegment = 'all';
+  window.viewSegment = function(seg) {
+      currentSegment = seg;
+      switchTab('escalations');
+  };
+
+  async function loadDashboard(){
+    if (!config.apiToken) return;
+    try {
+      const res = await fetch(config.apiUrl.replace(/\/$/, "") + "/ops/batch-summary", {
+        headers: { "X-Ops-Token": config.apiToken }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+    
+      document.getElementById("statTotal").textContent = data.metrics?.total_transactions || data.total_tx || 0;
+      document.getElementById("statRecovered").textContent = data.metrics?.status_breakdown?.recovered || data.statuses?.recovered || 0;
+      document.getElementById("statFailed").textContent = (data.metrics?.status_breakdown?.failed || data.statuses?.failed || 0) + (data.metrics?.status_breakdown?.dead_letter || data.statuses?.dead_letter || 0);
+      document.getElementById("statEscalated").textContent = data.metrics?.status_breakdown?.escalated || data.statuses?.escalated || 0;
+
+      document.getElementById("statPending").textContent = data.metrics?.status_breakdown?.pending || data.statuses?.pending || 0;
+      document.getElementById("statKilled").textContent = data.metrics?.status_breakdown?.killed || data.statuses?.killed || 0;
+      
+      document.getElementById("finRecovered").textContent = '₹' + Number(data.metrics?.total_recovered_inr || 0).toLocaleString('en-IN');
+      document.getElementById("finPending").textContent = '₹' + Number(data.metrics?.amount_pending || 0).toLocaleString('en-IN');
+      document.getElementById("finRisk").textContent = '₹' + Number(data.metrics?.amount_at_risk || 0).toLocaleString('en-IN');
+      
+      const escCount = (data.statuses?.escalated || 0) + (data.statuses?.killed || 0) + (data.statuses?.failed || 0);
+      const b = document.getElementById("escCount");
+      if(b) b.textContent = escCount;
+    
+
+    
+      const categories = data.metrics?.category_breakdown || data.categories || {};
+      const maxCat = Math.max(...Object.values(categories), 1);
+      document.getElementById("categoryTable").innerHTML = Object.entries(categories)
+        .map(([cat, count]) => `
+          <div class="dash-row">
+            <span>${cat}</span>
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(count/maxCat*100).toFixed(0)}%"></div></div>
+            <span>${count}</span>
+          </div>
+        `).join("");
+    
+      const sample_audits = data.samples || data.metrics?.recent_activity || data.sample_audits || [];
+      document.getElementById("activityTable").innerHTML = sample_audits
+        .map(tx => `
+          <div class="dash-row" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:background 0.2s;" onmouseover="this.style.background='var(--panel-2)'" onmouseout="this.style.background='transparent'" onclick="showAuditModal('${tx.id || tx.transaction_id}')" title="Click to view audit trail">
+            <span style="flex:1; text-align:left; font-weight:500;">${tx.category || 'unknown'}</span>
+            <span style="flex:1; text-align:center; color:var(--text-2)">₹${tx.amount_inr || tx.amount || 0}</span>
+            <span style="flex:1; text-align:right; font-weight:600;">${tx.status || 'unknown'}</span>
+          </div>
+        `).join("");
+    } catch(e) {}
+  }
+
+  // ── Tab switching ────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    const isDashboard = tab === 'dashboard';
+    const isChat = tab === 'chat';
+    const isEscalations = tab === 'escalations';
+    
+    document.getElementById('tabDashboard')?.classList.toggle('active', isDashboard);
+    document.getElementById('tabChat')?.classList.toggle('active', isChat);
+    document.getElementById('tabEscalations')?.classList.toggle('active', isEscalations);
+    
+    const dashPanel = document.getElementById('dashboardPanel');
+    if (dashPanel) { dashPanel.style.display = isDashboard ? 'block' : 'none'; }
+    if (isDashboard) loadDashboard();
+
+    const chatEls = ['messages'];
+    chatEls.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = isChat ? '' : 'none';
+    });
+
+    // Conditionally handle the interactive anchor
+    const anchor = document.getElementById('interactiveAnchor');
+    if (anchor) {
+        if (!isChat) {
+            anchor.style.display = 'none';
+        } else if (anchor.innerHTML.trim() !== '') {
+            anchor.style.display = 'flex';
+        }
+    }
+
+    const inputbar = document.querySelector('.inputbar');
+    if (inputbar) inputbar.style.display = isChat ? '' : 'none';
+
+    const esPanel = document.getElementById('escalationsPanel');
+    if (esPanel) { esPanel.style.display = isEscalations ? 'flex' : 'none'; esPanel.style.flexDirection = 'column'; }
+
+    
+    if (isEscalations) loadEscalations();
+      }
+
+
+  // ── Escalation Tickets ───────────────────────────────────────────────────
+  async function loadEscalations() {
+    const container = document.getElementById('escalationsContainer');
+    container.innerHTML = '<div style="padding:24px 0;color:var(--text-2);">Loading…</div>';
+    try {
+      const res = await fetch(config.apiUrl.replace(/\/$/, '') + '/ops/transactions?filter=' + currentSegment + '', {
+        headers: { 'X-Ops-Token': config.apiToken }
+      });
+      if (!res.ok) { container.innerHTML = `<div style="color:var(--danger)">Error ${res.status}</div>`; return; }
+      const tickets = await res.json();
+
+      
+      
+      
+
+      if (tickets.length === 0) {
+        container.innerHTML = '<div style="padding:48px 0;text-align:center;color:var(--text-2);">✓ No escalated transactions</div>';
+        return;
+      }
+
+      let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;">
+        <thead><tr style="border-bottom:1px solid var(--line);">
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">ID</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Amount</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Category</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Status / Reason</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Email</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Promise Due</th>
+          <th style="padding:10px 12px;text-align:left;color:var(--text-2);font-weight:600;">Actions</th>
+        </tr></thead><tbody>`;
+
+      for (const t of tickets) {
+        let reasonHtml = `<div style="max-width:240px;white-space:normal;font-size:12px; display:flex; flex-direction:column; gap:4px;">`;
+        if (t.is_customer_initiated) {
+            reasonHtml += `<div style="color:var(--warn);font-weight:600;font-size:11px;">🚨 Customer Requested Human</div>`;
+        }
+        
+        let sc = 'var(--text-2)';
+        if (t.status === 'recovered') sc = 'var(--ok)';
+        else if (t.status === 'escalated') sc = 'var(--warn)';
+        else if (t.status === 'failed' || t.status === 'killed') sc = 'var(--danger)';
+        
+        reasonHtml += `<div><span style="background:${sc}22;color:${sc};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;display:inline-block;border:1px solid ${sc}44;">${t.status.toUpperCase()}</span></div>`;
+        
+        if (t.error_reason) {
+            reasonHtml += `<div style="color:var(--text-2);font-style:italic;margin-top:2px;line-height:1.2;">"${t.error_reason}"</div>`;
+        }
+        reasonHtml += `</div>`;
+
+        const due = t.due_date ? t.due_date.slice(0,10) : '—';
+        html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:10px 12px;font-family:monospace;color:var(--text-2);">…${t.id.slice(-8)}</td>
+          <td style="padding:10px 12px;font-weight:700;">₹${Number(t.amount_inr).toLocaleString('en-IN')}</td>
+          <td style="padding:10px 12px;color:var(--text-2);">${t.category}</td>
+          <td style="padding:10px 12px;vertical-align:top;">${reasonHtml}</td>
+          <td style="padding:10px 12px;color:var(--text-2);">${t.email || '—'}</td>
+          <td style="padding:10px 12px;color:var(--text-2);">${due}</td>
+          <td style="padding:10px 12px;display:flex;gap:6px;">
+            <button class="btn-ide-option" style="font-size:11px;padding:4px 10px;" onclick="showAuditModal('${t.id}')">Logs</button>
+            <button class="btn-ide-option" style="font-size:11px;padding:4px 10px;" onclick="switchTab('chat');setTimeout(()=>{document.getElementById('input').value='Run broken_promise playbook for transaction ${t.id}';sendMessage();},150);">Run Playbook</button>
+            ${t.has_active_promise ? 
+              `<button class="btn-ide-option" style="font-size:11px;padding:4px 10px;color:var(--accent);" onclick="switchTab('chat');setTimeout(()=>{document.getElementById('input').value='Run send_reminder playbook for transaction ${t.id}';sendMessage();},150);">Send Reminder</button>` :
+              `<button class="btn-ide-option" style="font-size:11px;padding:4px 10px;" onclick="switchTab('chat');setTimeout(()=>{document.getElementById('input').value='Generate a payment link for ₹${t.amount_inr} for transaction ${t.id}';sendMessage();},150);">New Link</button>`
+            }
+          </td>
+        </tr>`;
+      }
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = `<div style="color:var(--danger)">Failed to load: ${e.message}</div>`;
+    }
+  }
+
+  async function updateEscalationBadge() {
+    if (!config.apiToken) return;
+    try {
+      const res = await fetch(config.apiUrl.replace(/\/$/, '') + '/ops/transactions?filter=' + currentSegment + '', {
+        headers: { 'X-Ops-Token': config.apiToken }
+      });
+      if (!res.ok) return;
+      const tickets = await res.json();
+      
+      
+    } catch(e) {}
+  }
+
+  // Init: load metrics + badges after 1.5s (gives settings time to load)
+  setTimeout(() => { loadDashboard(); updateEscalationBadge(); }, 1500);
+
+  // ── Audit Modal Logic ────────────────────────────────────────────────────
+  async function showAuditModal(txId) {
+    const modal = document.getElementById('auditModal');
+    if (!modal) return;
+    
+    document.getElementById('auditModalBody').innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-2);">Loading logs...</div>';
+    modal.style.display = 'flex';
+    
+    try {
+      const res = await fetch(config.apiUrl.replace(/\/$/, '') + '/ops/audit/' + txId, {
+        headers: { 'X-Ops-Token': config.apiToken }
+      });
+      if (!res.ok) {
+          document.getElementById('auditModalBody').innerHTML = `<div style="padding:40px; color:var(--danger);">Error loading audit logs: ${res.status}</div>`;
+          return;
+      }
+      const data = await res.json();
+      
+      let html = `<div style="display:flex; flex-direction:column; gap:24px;">`;
+      
+      // 1. Audit Trail (System Events)
+      html += `<div style="background:var(--panel-1); border:1px solid var(--line); border-radius:8px; padding:16px;">
+        <h3 style="margin-top:0; margin-bottom:16px; font-size:14px; color:var(--text-1); border-bottom:1px solid var(--line); padding-bottom:8px;">System Audit Log</h3>
+        <table style="width:100%; font-size:13px; text-align:left; border-collapse:collapse; table-layout:fixed;">
+          <thead>
+            <tr style="color:var(--text-2); border-bottom:1px solid var(--line-soft);">
+              <th style="padding:8px; font-weight:600; width:100px;">Time</th>
+              <th style="padding:8px; font-weight:600;">Event</th>
+              <th style="padding:8px; font-weight:600; width:120px;">Actor</th>
+            </tr>
+          </thead>
+          <tbody>`;
+          
+      if (data.audit_trail && data.audit_trail.length > 0) {
+          data.audit_trail.forEach(e => {
+             const t = new Date(e.created_at).toLocaleTimeString();
+             
+             let payloadStr = "";
+             if (e.payload && Object.keys(e.payload).length > 0) {
+                 const p = e.payload;
+                 let details = [];
+                 if (p.payment_link) details.push(`<a href="${p.payment_link}" target="_blank" style="color:var(--accent); text-decoration:none;">${p.payment_link}</a>`);
+                 if (p.link) details.push(`<a href="${p.link}" target="_blank" style="color:var(--accent); text-decoration:none;">${p.link}</a>`);
+                 if (p.amount) details.push(`₹${p.amount}`);
+                 if (p.reason) details.push(`<i>${p.reason}</i>`);
+                 if (p.due_date) details.push(`Due: ${p.due_date.slice(0,10)}`);
+                 if (p.immediate_leg_inr) details.push(`Immediate: ₹${p.immediate_leg_inr}`);
+                 if (p.promised_leg_inr) details.push(`Promised: ₹${p.promised_leg_inr}`);
+                 
+                 if (details.length > 0) {
+                     payloadStr = `<div style="font-size:11px; margin-top:4px; color:var(--text-2);">${details.join(" • ")}</div>`;
+                 }
+             }
+
+             html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td style="padding:10px 8px; color:var(--text-2); font-family:monospace; vertical-align:top;">${t}</td>
+                <td style="padding:10px 8px; font-weight:500; vertical-align:top;">
+                  ${e.event_type}
+                  ${payloadStr}
+                </td>
+                <td style="padding:10px 8px; color:var(--text-2); vertical-align:top;">${e.actor}</td>
+             </tr>`;
+          });
+      } else {
+          html += `<tr><td colspan="3" style="padding:16px 0; color:var(--text-2); text-align:center;">No system logs found.</td></tr>`;
+      }
+      html += `</tbody></table></div>`;
+      
+      // 2. Chat History (AI vs Customer)
+      html += `<div style="background:var(--panel-1); border:1px solid var(--line); border-radius:8px; padding:16px;">
+        <h3 style="margin-top:0; margin-bottom:16px; font-size:14px; color:var(--text-1); border-bottom:1px solid var(--line); padding-bottom:8px;">Customer Chat History</h3>
+        <div style="display:flex; flex-direction:column; gap:12px;">`;
+        
+      if (data.chat_history && data.chat_history.length > 0) {
+          data.chat_history.forEach(msg => {
+              // Handle both plain objects {role, content} and LangChain serialized dicts {type: 'human', data: {content}}
+              let role = msg.role || msg.type || 'unknown';
+              if (role === 'system') return;
+              
+              let contentStr = msg.content || (msg.data ? msg.data.content : '') || JSON.stringify(msg);
+              
+              const isUser = role === 'user' || role === 'human';
+              const align = isUser ? 'flex-end' : 'flex-start';
+              const bg = isUser ? 'var(--panel-2)' : 'rgba(16, 185, 129, 0.1)';
+              const border = isUser ? 'var(--line)' : 'rgba(16, 185, 129, 0.2)';
+              const color = isUser ? 'var(--text-1)' : '#10b981';
+              const name = isUser ? 'Customer' : 'AI Agent';
+              
+              html += `<div style="display:flex; justify-content:${align};">
+                  <div style="max-width:80%; background:${bg}; border:1px solid ${border}; border-radius:8px; padding:10px 14px; font-size:13px; line-height:1.5;">
+                    <div style="font-size:11px; font-weight:700; color:${color}; margin-bottom:4px;">${name}</div>
+                    <div style="color:var(--text-1); white-space:pre-wrap;">${contentStr}</div>
+                  </div>
+              </div>`;
+          });
+      } else {
+          html += `<div style="text-align:center; padding:16px; color:var(--text-2);">No chat interactions occurred.</div>`;
+      }
+      html += `</div></div>`;
+      
+      html += `</div>`;
+      document.getElementById('auditModalBody').innerHTML = html;
+      
+    } catch(e) {
+       console.error(e);
+       document.getElementById('auditModalBody').innerHTML = `<div style="padding:40px; color:var(--danger);">Failed to load logs.</div>`;
+    }
+  }
+
+</script>
+
+<!-- AUDIT MODAL (Simple & Clean) -->
+<div id="auditModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(4px);">
+  <div style="background:var(--bg); width:90%; max-width:800px; max-height:85vh; border-radius:8px; display:flex; flex-direction:column; border: 1px solid var(--line); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background:var(--panel-1); border-radius:8px 8px 0 0;">
+      <h2 style="margin:0; font-size:16px; font-weight:600;">Transaction Logs</h2>
+      <button onclick="document.getElementById('auditModal').style.display='none'" style="background:transparent; border:none; color:var(--text-2); cursor:pointer; font-size:24px; line-height:1;">&times;</button>
+    </div>
+    <div id="auditModalBody" style="flex:1; overflow-y:auto; padding:20px;">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

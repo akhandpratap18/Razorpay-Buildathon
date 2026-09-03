@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="referrer" content="no-referrer" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Complete your payment — Recoup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/recoup-ui.css">
+</head>
+<body>
+
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e3a8a"/>
+        <stop offset="30%" stop-color="#2563eb"/>
+        <stop offset="50%" stop-color="#3b82f6"/>
+        <stop offset="70%" stop-color="#60a5fa"/>
+        <stop offset="100%" stop-color="#93c5fd"/>
+      </linearGradient>
+      <clipPath id="shieldClip">
+        <path d="M50,4 L90,18 V48 C90,74 72,90 50,98 C28,90 10,74 10,48 V18 Z"/>
+      </clipPath>
+      <symbol id="cascadeShield" viewBox="0 0 100 100">
+        <g clip-path="url(#shieldClip)">
+          <rect x="4"  y="8"  width="92" height="13" rx="3" fill="url(#metalGrad)" opacity="1"/>
+          <rect x="10" y="24" width="80" height="12" rx="3" fill="url(#metalGrad)" opacity="0.88"/>
+          <rect x="16" y="39" width="68" height="11" rx="3" fill="url(#metalGrad)" opacity="0.76"/>
+          <rect x="22" y="53" width="56" height="10" rx="3" fill="url(#metalGrad)" opacity="0.64"/>
+          <rect x="28" y="66" width="44" height="9"  rx="3" fill="url(#metalGrad)" opacity="0.52"/>
+          <rect x="34" y="78" width="32" height="8"  rx="3" fill="url(#metalGrad)" opacity="0.42"/>
+        </g>
+        <path d="M50,4 L90,18 V48 C90,74 72,90 50,98 C28,90 10,74 10,48 V18 Z"
+              fill="none" stroke="url(#metalGrad)" stroke-width="2.2" opacity="0.95"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="topbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 100 100"><use href="#cascadeShield"/></svg>
+      <span class="brand-mark">RECOUP</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="col" id="mainCol">
+
+      <div class="txn-card" id="txnCard" style="display:none;">
+        <div class="txn-top">
+          <div class="txn-amount" id="txnAmount">—</div>
+          <div class="txn-status" id="txnStatus">payment failed</div>
+        </div>
+        <div class="txn-reason" id="txnReason">—</div>
+        <div class="txn-id" id="txnId">—</div>
+      </div>
+
+      <div class="promise-card" id="promiseCard" style="display:none;">
+        <div class="promise-top">
+          <span class="promise-label">Your plan</span>
+          <span class="promise-status" id="promiseStatus">pending</span>
+        </div>
+        <div class="promise-row">
+          <span>Paying now</span>
+          <span id="promiseNow">—</span>
+        </div>
+        <div class="promise-row">
+          <span>Remaining, due <span id="promiseDate">—</span></span>
+          <span id="promiseRemaining">—</span>
+        </div>
+        <div class="promise-note">We'll email you a link for the remainder a couple of days before it's due — no need to remember.</div>
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <!-- ── Interactive Anchor (Options/Forms) ── -->
+      <div id="interactiveAnchor" style="display:none;padding:12px 16px;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-direction:column;gap:8px;"></div>
+
+
+      <div class="inputbar" id="inputBar" style="display:none;">
+        <div class="inputwrap">
+          <button class="mic-toggle" id="voiceEnterBtn" title="Talk instead">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+            </svg>
+          </button>
+          <textarea id="input" rows="1" placeholder="Type your reply…"></textarea>
+          <button class="send" id="sendBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/>
+            </svg>
+          </button>
+        </div>
+        <div class="foot-note">This conversation is private to your payment — nothing here is shared beyond it</div>
+      </div>
+
+      <div class="link-error" id="linkError" style="display:none;">
+        <h2>This link isn't active</h2>
+        <p>It may have expired, already been used, or the payment may already be complete. Contact support if you think this is a mistake.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Voice mode: full-screen takeover, no bubbles, no message list ── -->
+  <div class="voice-overlay" id="voiceOverlay">
+    <div class="voice-topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 100 100"><use href="#cascadeShield"/></svg>
+        <span class="brand-mark">RECOUP</span>
+      </div>
+    </div>
+
+    <div class="voice-stage" id="voiceStage" data-state="idle">
+      <div class="orb-wrap">
+        <div class="orb-ring"></div>
+        <div class="orb">
+          <div class="blob-group">
+            <div class="blob blob-a"></div>
+            <div class="blob blob-b"></div>
+            <div class="blob blob-c"></div>
+            <div class="blob blob-d"></div>
+          </div>
+        </div>
+      </div>
+      <div class="voice-state-label" id="voiceStateLabel">Tap to talk</div>
+      <div class="voice-caption" id="voiceCaption"></div>
+    </div>
+    <div id="voiceInteractiveAnchor" style="display:none;padding:12px 16px;margin:0 auto 16px auto;width:90%;max-width:460px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.15);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);backdrop-filter:blur(8px);z-index:10;flex-direction:column;gap:8px;"></div>
+    <div class="voice-controls">
+      <button class="voice-mic-btn" id="voiceMicBtn" title="Tap to talk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+        </svg>
+      </button>
+      <button class="voice-exit-btn" id="voiceExitBtn" title="Back to text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+<script>
+  // Configure this to point at your deployed API.
+  const API_BASE = "https://razorpay-buildathon.onrender.com";
+
+  function renderText(text) {
+    let html = (text || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    // If the LLM explicitly output literal <br> tags, they became &lt;br&gt;. Revert them so they work.
+    html = html.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s\)<"']+)/g, function(match, mdText, mdUrl, rawUrl) {
+      if (rawUrl) {
+        // Stop trailing punctuation from being included in the URL
+        let cleanUrl = rawUrl.replace(/[.,;!?]$/, '');
+        let trailing = rawUrl.substring(cleanUrl.length);
+        return '<a href="' + cleanUrl + '" target="_blank" style="text-decoration: underline; color: #3b82f6;">' + cleanUrl + '</a>' + trailing;
+      } else {
+        return '<a href="' + mdUrl + '" target="_blank" style="text-decoration: underline; color: #3b82f6;">' + mdText + '</a>';
+      }
+    });
+    return html;
+  }
+
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  const $ = (id) => document.getElementById(id);
+  const messagesEl = $("messages");
+
+  function addMessage(role, text, opts={}){
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + (role === "me" ? "me" : "bot");
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    const textNode = document.createElement("div");
+    textNode.innerHTML = renderText(text);
+    bubble.appendChild(textNode);
+
+    if(opts.options && opts.options.length){
+      const box = document.createElement("div");
+      box.className = "options";
+      opts.options.forEach(opt=>{
+        const btn = document.createElement("div");
+        btn.className = "option-btn" + (opt.type === "custom_amount" ? " custom-amount" : "");
+        btn.innerHTML = `<div class="t">${opt.title}</div><div class="s">${opt.subtitle || ""}</div>`;
+        btn.onclick = () => {
+          if(opt.type === "custom_amount"){
+            const inputEl = $("input");
+            inputEl.placeholder = opt.placeholder || "Enter the amount you can pay…";
+            inputEl.focus();
+            return;
+          }
+          sendMessage(opt.reply_text || opt.title);
+        };
+        box.appendChild(btn);
+      });
+      bubble.appendChild(box);
+    }
+
+    if(opts.paymentUrl){
+      const link = document.createElement("a");
+      link.href = opts.paymentUrl;
+      link.target = "_blank";
+      link.className = "pay-btn";
+      link.textContent = "Complete payment →";
+      bubble.appendChild(document.createElement("br"));
+      bubble.appendChild(link);
+    }
+
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addTyping(){
+    const wrap = document.createElement("div");
+    wrap.className = "msg bot";
+    wrap.id = "typingRow";
+    wrap.innerHTML = `<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+  function removeTyping(){ const t = $("typingRow"); if(t) t.remove(); }
+
+  function updatePromiseCard(promise){
+    $("promiseCard").style.display = "block";
+    $("promiseStatus").textContent = promise.status || "pending";
+    $("promiseNow").textContent = promise.immediate_display || "—";
+    $("promiseRemaining").textContent = promise.remaining_display || "—";
+    $("promiseDate").textContent = promise.due_date_display || "—";
+  }
+
+  function showLinkError(){
+    $("linkError").style.display = "block";
+    $("txnCard").style.display = "none";
+    $("inputBar").style.display = "none";
+    messagesEl.style.display = "none";
+  }
+
+  async function loadTransaction(){
+    if(!token){ showLinkError(); return; }
+    try{
+      const res = await fetch(`${API_BASE}/recover/${token}/context`);
+      if(!res.ok){ showLinkError(); return; }
+      const data = await res.json();
+
+      $("txnCard").style.display = "block";
+      $("inputBar").style.display = "block";
+      $("txnAmount").textContent = data.amount_display || "—";
+      $("txnReason").textContent = data.reason_display || "We noticed your payment didn't go through.";
+      $("txnId").textContent = "Order " + (data.order_id || "—");
+
+      addMessage("bot", data.opening_message ||
+        "Hi — I'm here to help sort out your payment. Want to see your options, or tell me what happened?");
+    } catch(e){
+      showLinkError();
+    }
+  }
+
+  async function sendMessage(overrideText){
+    const input = $("input");
+    const text = (overrideText ?? input.value).trim();
+    if(!text || !token) return;
+
+    addMessage("me", text);
+    if(!overrideText){ input.value = ""; input.style.height = "auto"; }
+    $("sendBtn").disabled = true;
+    addTyping();
+
+    try{
+      const res = await fetch(`${API_BASE}/recover/${token}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      removeTyping();
+
+      if(res.status === 410) {
+        showLinkError();
+        return;
+      }
+      if(!res.ok){
+        addMessage("bot", "Something went wrong on our end — please try again in a moment.");
+        return;
+      }
+      const data = await res.json();
+      addMessage("bot", data.reply || "…", { options: data.options || null, paymentUrl: data.payment_url || null });
+      if(data.input_request) { showAnchor(data.input_request); } else { dismissAnchor(); }
+      if(data.promise){ updatePromiseCard(data.promise); }
+    } catch(e){
+      removeTyping();
+      addMessage("bot", "Couldn't reach Recoup right now — please try again shortly.");
+    } finally{
+      $("sendBtn").disabled = false;
+    }
+  }
+
+  $("sendBtn").addEventListener("click", () => sendMessage());
+  $("input").addEventListener("input", function(){
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  });
+  $("input").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // VOICE MODE
+  // Rule: while active, the message list receives nothing. Every
+  // voice turn is held in `voicePending` and only flushed into real
+  // bubbles when the customer exits back to text. The caption is a
+  // single replaced line — never an appended list. See the Voice
+  // Mode Redesign Plan for why this distinction matters.
+  // ══════════════════════════════════════════════════════════════
+  const voiceOverlay = $("voiceOverlay");
+  const voiceStage = $("voiceStage");
+  const voiceStateLabel = $("voiceStateLabel");
+  const voiceCaption = $("voiceCaption");
+  const voiceMicBtn = $("voiceMicBtn");
+
+  let voicePending = [];       // {role, text, options, paymentUrl, promise} awaiting flush to bubbles
+  let voiceIsRecording = false;
+  let vMediaRecorder, vAudioChunks = [], vAudioCtx, vAnalyser, vRafId, vStream;
+  let currentAudio = null;
+
+  function setVoiceState(state, label){
+    voiceStage.dataset.state = state;
+    voiceStateLabel.textContent = label;
+  }
+  function setVoiceCaption(text){
+    // Replace, never append — this is the line that keeps voice mode from
+    // silently turning back into a scrolling chat log.
+    voiceCaption.style.opacity = 0;
+    setTimeout(() => { voiceCaption.innerHTML = renderText(text); voiceCaption.style.opacity = 1; }, 90);
+  }
+
+    function stopSpeaking() {
+    audioQueue = [];
+    isPlayingQueue = false;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
+
+  function enterVoiceMode(){
+    voicePending = [];
+    voiceOverlay.classList.add("active");
+    setVoiceState("idle", "Tap to talk");
+    setVoiceCaption("");
+  }
+
+  function exitVoiceMode(){
+    if(voiceIsRecording) stopVoiceListening();
+    stopSpeaking();
+    voiceOverlay.classList.remove("active");
+
+    // Flush everything that happened during the call into the normal
+    // bubble thread now — never bubble-by-bubble while voice was active.
+    voicePending.forEach(turn => {
+      addMessage(turn.role, turn.text, { options: turn.options, paymentUrl: turn.paymentUrl });
+      if(turn.promise) updatePromiseCard(turn.promise);
+      if(turn.input_request) showAnchor(turn.input_request);
+    });
+    voicePending = [];
+  }
+
+  async function startVoiceListening(){
+    try{
+      vStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch(e){
+      setVoiceCaption("Microphone access is needed to talk — try text instead.");
+      return;
+    }
+    vAudioChunks = [];
+    vMediaRecorder = new MediaRecorder(vStream);
+    vMediaRecorder.ondataavailable = (e) => vAudioChunks.push(e.data);
+    vMediaRecorder.onstop = handleVoiceStop;
+    vMediaRecorder.start();
+
+    vAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = vAudioCtx.createMediaStreamSource(vStream);
+    vAnalyser = vAudioCtx.createAnalyser();
+    vAnalyser.fftSize = 256;
+    source.connect(vAnalyser);
+    const data = new Uint8Array(vAnalyser.frequencyBinCount);
+    function loop(){
+      vAnalyser.getByteFrequencyData(data);
+      const avg = data.reduce((a,b)=>a+b,0) / data.length;
+      document.documentElement.style.setProperty("--amp", Math.min(avg/90,1).toFixed(3));
+      vRafId = requestAnimationFrame(loop);
+    }
+    loop();
+
+    voiceIsRecording = true;
+    voiceMicBtn.classList.add("recording");
+    setVoiceState("listening", "Listening…");
+    setVoiceCaption("");
+  }
+
+  function stopVoiceListening(){
+    if(!voiceIsRecording) return;
+    voiceIsRecording = false;
+    voiceMicBtn.classList.remove("recording");
+    vMediaRecorder.stop();
+    vStream.getTracks().forEach(t => t.stop());
+    cancelAnimationFrame(vRafId);
+    if(vAudioCtx) vAudioCtx.close();
+    document.documentElement.style.setProperty("--amp", "0");
+  }
+
+  async function handleVoiceStop(){
+    setVoiceState("thinking", "Thinking…");
+    const blob = new Blob(vAudioChunks, { type: "audio/webm" });
+
+    try{
+      const form = new FormData();
+      form.append("audio", blob, "speech.webm");
+      form.append("prompt_context", "Transcribe the audio exactly as spoken. If the user speaks Hindi, output in Devanagari script (e.g. मेरा पेमेंट फेल हो गया, मुझे मदद चाहिए). If English, output English. Do NOT translate.");
+      const tRes = await fetch(`${API_BASE}/voice/transcribe`, { method: "POST", body: form });
+      if(!tRes.ok) {
+        if (tRes.status === 400) throw new Error("low_confidence");
+        throw new Error("transcribe failed");
+      }
+      const { transcript } = await tRes.json();
+
+      if(!transcript || !transcript.trim()){
+        speakInVoiceMode("Sorry, I didn't catch that — could you try again?");
+        return;
+      }
+      setVoiceCaption(transcript);
+      voicePending.push({ role: "me", text: transcript });
+
+      const res = await fetch(`${API_BASE}/recover/${token}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: transcript })
+      });
+      if(res.status === 410) {
+        exitVoiceMode();
+        showLinkError();
+        return;
+      }
+      if(!res.ok) throw new Error("chat failed");
+      const data = await res.json();
+      voicePending.push({
+        role: "bot", text: data.reply || "…",
+        options: data.options || null, paymentUrl: data.payment_url || null,
+        promise: data.promise || null,
+        input_request: data.input_request || null
+      });
+      speakInVoiceMode(data.reply || "Sorry, something went wrong.");
+      if(data.input_request) { showAnchor(data.input_request); } else { dismissAnchor(); }
+    } catch(e){
+      setVoiceState("idle", "Tap to talk");
+      if (e.message === "low_confidence") {
+          setVoiceCaption("I couldn't hear you clearly. Please try again.");
+      } else {
+          setVoiceCaption("Couldn't reach Recoup — please try again.");
+      }
+    }
+  }
+
+  let audioQueue = [];
+  let isPlayingQueue = false;
+
+  function playNextAudio() {
+    if (audioQueue.length === 0) {
+      isPlayingQueue = false;
+      setVoiceState("idle", "Tap to talk");
+      return;
+    }
+    isPlayingQueue = true;
+    const url = audioQueue.shift();
+    currentAudio = new Audio(url);
+    currentAudio.onended = () => { currentAudio = null; playNextAudio(); };
+    currentAudio.onerror = () => { currentAudio = null; playNextAudio(); };
+    currentAudio.play().catch(e => { currentAudio = null; playNextAudio(); });
+  }
+
+  // ── Interactive Anchor ───────────────────────────────────────────────────
+  function dismissAnchor() {
+    const vAnchor = document.getElementById("voiceInteractiveAnchor");
+    const tAnchor = document.getElementById("interactiveAnchor");
+    if(vAnchor) { vAnchor.style.display = "none"; vAnchor.innerHTML = ""; }
+    if(tAnchor) { tAnchor.style.display = "none"; tAnchor.innerHTML = ""; }
+  }
+
+  function showAnchor(ir) {
+    const inVoiceMode = voiceOverlay.classList.contains("active");
+    const targetAnchorEl = inVoiceMode 
+      ? document.getElementById("voiceInteractiveAnchor") 
+      : document.getElementById("interactiveAnchor");
+      
+    targetAnchorEl.innerHTML = "";
+    targetAnchorEl.style.display = "flex";
+    
+    // Prompt label
+    const label = document.createElement("div");
+    label.style.fontSize = "13px";
+    label.style.fontWeight = "500";
+    label.style.color = "var(--text-2)";
+    label.textContent = ir.prompt || "Missing details:";
+    targetAnchorEl.appendChild(label);
+
+    const body = document.createElement("div");
+    body.style.display = "flex";
+    body.style.flexDirection = "column";
+    body.style.gap = "6px";
+    targetAnchorEl.appendChild(body);
+
+    if (ir.options && ir.options.length > 0) {
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.flexWrap = "wrap";
+      btnRow.style.gap = "6px";
+
+      ir.options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "btn-ide-option";
+        btn.innerHTML = `<span class="shortcut-num">${idx + 1}</span> ${opt.replace(/_/g, ' ')}`;
+        btn.onclick = () => {
+          dismissAnchor();
+          sendMessage(opt, true);
+        };
+        btnRow.appendChild(btn);
+      });
+
+      const escBtn = document.createElement("button");
+      escBtn.className = "btn-ide-option";
+      escBtn.innerHTML = `<span class="shortcut-num">${ir.options.length + 1}</span> Type manually`;
+      escBtn.onclick = () => { dismissAnchor(); $("input").focus(); };
+      btnRow.appendChild(escBtn);
+      body.appendChild(btnRow);
+    } else {
+      const flexRow = document.createElement("div");
+      flexRow.style.display = "flex";
+      flexRow.style.gap = "8px";
+
+      const fi = document.createElement("input");
+      fi.type = "text";
+      fi.placeholder = "Type your response…";
+      fi.style.flex = "1";
+      fi.style.background = "var(--panel-2)";
+      fi.style.border = "1px solid var(--line)";
+      fi.style.color = "var(--text-1)";
+      fi.style.padding = "8px 12px";
+      fi.style.borderRadius = "6px";
+      fi.style.fontSize = "13px";
+      fi.style.outline = "none";
+
+      const sb = document.createElement("button");
+      sb.textContent = "Submit";
+      sb.style.cssText = "padding:8px 16px;border-radius:6px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:13px;";
+
+      const doSubmit = () => {
+        const val = fi.value.trim();
+        if (val) { dismissAnchor(); sendMessage(val, true); }
+      };
+      sb.onclick = doSubmit;
+      fi.addEventListener("keydown", e => { if(e.key === "Enter") doSubmit(); });
+
+      flexRow.appendChild(fi);
+      flexRow.appendChild(sb);
+      body.appendChild(flexRow);
+      setTimeout(() => fi.focus(), 80);
+    }
+  }
+
+  function speakInVoiceMode(text){
+    setVoiceState("speaking", "Speaking…");
+
+    // The caption will safely render raw markdown text to HTML internally
+    setVoiceCaption(text);
+
+    // Strip markdown tables (lines with 2+ pipes), bullet chars, and URLs before TTS
+    let speechText = text
+      .replace(/^.*\|.*\|.*$/gm, "")          // strip markdown table rows
+      .replace(/^[|:\- ]+$/gm, "")             // strip table separator lines
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1")  // [label](url) → label
+      .replace(/(https?:\/\/[^\s)]+)/g, "the link")
+      .replace(/^[•*\-] /gm, ". ")
+      .replace(/[*#[\]()]/g, "")
+      .trim();
+
+    const lang = /[\u0900-\u097F]/.test(speechText) ? "hi" : "en";
+
+    stopSpeaking();
+    audioQueue = [];
+
+    // Use the Recoup backend TTS (/voice/speak — Sarvam Bulbul) with browser fallback
+    const audioUrl = `${API_BASE}/voice/speak?text=${encodeURIComponent(speechText)}&lang=${lang}`;
+    const audio = new Audio(audioUrl);
+    audio.onended = () => { setVoiceState("idle", "Tap to talk"); };
+    audio.onerror = () => {
+      // Fallback to browser SpeechSynthesis
+      if (window.speechSynthesis) {
+        const utt = new SpeechSynthesisUtterance(speechText);
+        utt.lang = lang === "hi" ? "hi-IN" : "en-IN";
+        utt.onend = () => setVoiceState("idle", "Tap to talk");
+        window.speechSynthesis.speak(utt);
+      } else {
+        setVoiceState("idle", "Tap to talk");
+      }
+    };
+    audio.play().catch(() => {
+      setVoiceState("idle", "Tap to talk");
+    });
+  }
+
+
+  $("voiceEnterBtn").addEventListener("click", enterVoiceMode);
+  $("voiceExitBtn").addEventListener("click", exitVoiceMode);
+  voiceMicBtn.addEventListener("click", () => {
+    if(voiceIsRecording){ stopVoiceListening(); } else { startVoiceListening(); }
+  });
+
+  loadTransaction();
+</script>
+</body>
+</html>

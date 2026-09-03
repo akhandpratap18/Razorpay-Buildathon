@@ -1,0 +1,71 @@
+services:
+  # 1. FastAPI Web Server (Receives Webhooks)
+  - type: web
+    name: recoup-api
+    env: python
+    region: singapore # Choose a region close to Razorpay/Supabase
+    buildCommand: "pip install --upgrade pip && pip install ."
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+  # 2. Background Worker (Runs the LangGraph AI)
+  - type: worker
+    name: recoup-worker
+    env: python
+    region: singapore
+    buildCommand: "pip install --upgrade pip && pip install ."
+    startCommand: "python -m app.worker.poller"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      # Link all environment variables from the web service so we don't have to duplicate them
+      - key: SUPABASE_URL
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_ANON_KEY
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: SUPABASE_ANON_KEY
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: DATABASE_URL
+      - key: RAZORPAY_KEY_ID
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: RAZORPAY_KEY_ID
+      - key: RAZORPAY_KEY_SECRET
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: RAZORPAY_KEY_SECRET
+      - key: RAZORPAY_WEBHOOK_SECRET
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: RAZORPAY_WEBHOOK_SECRET
+      - key: GROQ_API_KEY
+        fromService:
+          type: web
+          name: recoup-api
+          envVarKey: GROQ_API_KEY

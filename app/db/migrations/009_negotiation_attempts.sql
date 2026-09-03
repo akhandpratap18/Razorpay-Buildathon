@@ -1,0 +1,1 @@
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS negotiation_attempts INTEGER NOT NULL DEFAULT 0;
